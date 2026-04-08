@@ -142,6 +142,36 @@ tr:hover td { background: var(--bg-card-hover); }
 .sheet-search input { width: 100%; max-width: 320px; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border); background: #1e2132; color: var(--text); font-family: inherit; font-size: 13px; outline: none; }
 .sheet-search input:focus { border-color: var(--accent); }
 .sheet-footer { margin-top: 12px; font-size: 12px; color: var(--text-muted); display: flex; justify-content: space-between; }
+
+/* Settings Panel */
+.guide-section { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+.guide-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.guide-section h3 { font-size: 14px; font-weight: 600; margin-bottom: 10px; color: var(--text); }
+.guide-section p { font-size: 13px; color: var(--text-dim); line-height: 1.6; margin-bottom: 8px; }
+.guide-steps { font-size: 13px; color: var(--text-dim); line-height: 1.7; }
+.guide-steps ol, .guide-steps ul { padding-left: 20px; margin: 6px 0; }
+.guide-steps li { margin-bottom: 4px; }
+.guide-steps a { color: var(--accent); text-decoration: none; }
+.guide-steps a:hover { text-decoration: underline; }
+.guide-steps code { background: #1e2132; padding: 2px 6px; border-radius: 4px; font-size: 12px; color: var(--warning); }
+.guide-note { font-size: 12px; color: var(--text-muted); font-style: italic; }
+
+/* Settings Controls */
+.setting-row { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; flex-wrap: wrap; }
+.setting-row label { font-size: 13px; font-weight: 500; color: var(--text-dim); min-width: 160px; }
+.setting-row input[type="number"], .setting-row select { padding: 7px 12px; border-radius: 8px; border: 1px solid var(--border); background: #1e2132; color: var(--text); font-family: inherit; font-size: 13px; outline: none; width: 100px; }
+.setting-row input:focus, .setting-row select:focus { border-color: var(--accent); }
+.setting-row select { width: auto; min-width: 120px; }
+.setting-row .setting-help { font-size: 11px; color: var(--text-muted); flex-basis: 100%; margin-left: 176px; margin-top: -8px; }
+.setting-group { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+.setting-group:last-child { border-bottom: none; }
+.setting-group h3 { font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+.save-bar { display: flex; align-items: center; gap: 12px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+.save-bar .save-status { font-size: 12px; color: var(--text-muted); }
+.checkbox-row { display: flex; align-items: center; gap: 8px; }
+.checkbox-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); }
+.day-checks { display: flex; gap: 12px; flex-wrap: wrap; }
+.day-checks label { display: flex; align-items: center; gap: 4px; font-size: 13px; color: var(--text-dim); cursor: pointer; }
 </style>
 </head>
 <body>
@@ -226,6 +256,109 @@ tr:hover td { background: var(--bg-card-hover); }
     </div>
     <div class="sheet-footer" id="sheetFooter"></div>
   </div>
+
+  <!-- Settings & Operations -->
+  <div class="card" id="settingsPanel">
+    <h2><span class="dot" style="background:var(--success)"></span> Settings & Operations</h2>
+
+    <div class="setting-group">
+      <h3>Email Outreach (WF#5)</h3>
+      <div class="setting-row">
+        <label>Daily send limit</label>
+        <input type="number" id="set-daily-limit" min="1" max="50" value="10">
+      </div>
+      <div class="setting-row">
+        <label>Send time (hour)</label>
+        <input type="number" id="set-send-hour" min="0" max="23" value="9">
+        <span style="font-size:12px;color:var(--text-muted)">24h format (9 = 9AM)</span>
+      </div>
+      <div class="setting-row">
+        <label>Sending days</label>
+        <div class="day-checks">
+          <label><input type="checkbox" value="1" class="day-check"> Mon</label>
+          <label><input type="checkbox" value="2" class="day-check" checked> Tue</label>
+          <label><input type="checkbox" value="3" class="day-check" checked> Wed</label>
+          <label><input type="checkbox" value="4" class="day-check" checked> Thu</label>
+          <label><input type="checkbox" value="5" class="day-check"> Fri</label>
+          <label><input type="checkbox" value="6" class="day-check"> Sat</label>
+          <label><input type="checkbox" value="0" class="day-check"> Sun</label>
+        </div>
+      </div>
+      <div class="setting-row">
+        <label>Bypass day check</label>
+        <div class="checkbox-row">
+          <input type="checkbox" id="set-bypass-day">
+          <span style="font-size:12px;color:var(--text-muted)">Enable to test sending on non-scheduled days</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="setting-group">
+      <h3>Podcast Discovery (WF#2)</h3>
+      <div class="setting-row">
+        <label>Relevance threshold</label>
+        <input type="number" id="set-relevance" min="1" max="10" value="4">
+      </div>
+      <div class="setting-row">
+        <div class="setting-help" style="margin-left:0">
+          <strong>Score guide:</strong> 9-10 psychedelic/ayahuasca focused &bull; 7-8 plant medicine adjacent &bull; 5-6 wellness/biohacking &bull; 3-4 general health/spirituality &bull; 1-2 loosely related
+        </div>
+      </div>
+    </div>
+
+    <div class="setting-group">
+      <h3>Add Podcast Manually</h3>
+      <div class="setting-row">
+        <label>Podcast name</label>
+        <input type="text" id="add-podcast-name" placeholder="e.g. The Tim Ferriss Show" style="width:260px">
+      </div>
+      <div class="setting-row">
+        <label>PodcastIndex Feed ID</label>
+        <input type="text" id="add-podcast-id" placeholder="e.g. 123456" style="width:160px">
+        <a href="https://podcastindex.org" target="_blank" style="font-size:12px;color:var(--accent)">Find ID →</a>
+      </div>
+      <div class="setting-row">
+        <label>Also extract guests?</label>
+        <div class="checkbox-row">
+          <input type="checkbox" id="add-podcast-extract">
+          <span style="font-size:12px;color:var(--text-muted)">Leave Processed blank so WF#3 picks it up</span>
+        </div>
+      </div>
+      <div class="setting-row">
+        <label></label>
+        <button class="btn btn-accent" onclick="Settings.addPodcast()">Add Podcast</button>
+      </div>
+    </div>
+
+    <div class="save-bar">
+      <button class="btn btn-accent" onclick="Settings.save()">Save Settings</button>
+      <span class="save-status" id="saveStatus"></span>
+    </div>
+
+    <div class="guide-section" style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+      <h3 style="cursor:pointer" onclick="document.getElementById('refLinks').classList.toggle('hidden');this.querySelector('.arrow').textContent=document.getElementById('refLinks').classList.contains('hidden')?'▶':'▼'">
+        Quick Reference <span class="arrow" style="font-size:12px;color:var(--text-muted)">▶</span>
+      </h3>
+      <div id="refLinks" class="hidden" style="margin-top:10px">
+        <div class="guide-steps">
+          <ul>
+            <li><strong>From:</strong> sam@send.lawayraretreat.com &bull; <strong>Replies to:</strong> sambeliev@gmail.com</li>
+            <li>Change reply-to: <a href="https://ayahuascaincolombia.com:2083" target="_blank">cPanel</a> → Forwarders</li>
+            <li>Change from address: <a href="https://www.getdrip.com" target="_blank">Drip</a> → Workflows → Podcast Pitch Outreach</li>
+            <li>After API updates, re-set Google Sheets credentials in <a href="https://server.lawayraserver.com" target="_blank">n8n UI</a></li>
+          </ul>
+          <p style="margin-top:10px"><strong>Links:</strong>
+            <a href="https://server.lawayraserver.com" target="_blank">n8n</a> &bull;
+            <a href="https://docs.google.com/spreadsheets/d/16l7E6Cox0fT5ktCXLjdJA6IWkY7P3EEWGg2hViYKwIY/edit" target="_blank">Google Sheet</a> &bull;
+            <a href="https://www.getdrip.com" target="_blank">Drip</a> &bull;
+            <a href="https://podcastindex.org" target="_blank">PodcastIndex</a>
+          </p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
 </div>
 
 <!-- Toast Container -->
@@ -675,6 +808,105 @@ const SheetView = {
 };
 
 // ============================================================
+// SETTINGS
+// ============================================================
+const SETTINGS_WEBHOOK = 'https://server.lawayraserver.com/webhook/lw-settings';
+
+const Settings = {
+  // Load settings from the Settings sheet tab (if it exists)
+  async load() {
+    try {
+      const data = await DataService.fetchSheet('Settings');
+      if (!data || data.length === 0) return;
+      const map = {};
+      data.forEach(row => { if (row.Key) map[row.Key] = row.Value; });
+
+      if (map.daily_limit) document.getElementById('set-daily-limit').value = map.daily_limit;
+      if (map.send_hour) document.getElementById('set-send-hour').value = map.send_hour;
+      if (map.relevance_threshold) document.getElementById('set-relevance').value = map.relevance_threshold;
+      if (map.bypass_day_check === 'true') document.getElementById('set-bypass-day').checked = true;
+
+      // Sending days
+      if (map.sending_days) {
+        const days = map.sending_days.split(',').map(d => d.trim());
+        document.querySelectorAll('.day-check').forEach(cb => {
+          cb.checked = days.includes(cb.value);
+        });
+      }
+    } catch (e) {
+      console.log('Settings tab not found, using defaults');
+    }
+  },
+
+  // Save settings via webhook → n8n writes to Settings sheet
+  async save() {
+    const status = document.getElementById('saveStatus');
+    status.textContent = 'Saving...';
+    status.style.color = 'var(--text-dim)';
+
+    const days = [];
+    document.querySelectorAll('.day-check:checked').forEach(cb => days.push(cb.value));
+
+    const settings = {
+      daily_limit: document.getElementById('set-daily-limit').value,
+      send_hour: document.getElementById('set-send-hour').value,
+      sending_days: days.join(','),
+      bypass_day_check: document.getElementById('set-bypass-day').checked ? 'true' : 'false',
+      relevance_threshold: document.getElementById('set-relevance').value
+    };
+
+    try {
+      await fetch(SETTINGS_WEBHOOK + '?action=save&' + new URLSearchParams(settings).toString(), {
+        method: 'GET',
+        mode: 'no-cors'
+      });
+      status.textContent = 'Saved! Settings will apply on next workflow run.';
+      status.style.color = 'var(--success)';
+      Toast.show('Settings saved successfully', 'success');
+      setTimeout(() => { status.textContent = ''; }, 5000);
+    } catch (e) {
+      status.textContent = 'Failed to save';
+      status.style.color = 'var(--danger)';
+      Toast.show('Failed to save settings: ' + e.message, 'error');
+    }
+  },
+
+  // Add a podcast to the Discovered Podcasts sheet
+  async addPodcast() {
+    const name = document.getElementById('add-podcast-name').value.trim();
+    const id = document.getElementById('add-podcast-id').value.trim();
+    const extract = document.getElementById('add-podcast-extract').checked;
+
+    if (!name || !id) {
+      Toast.show('Please enter both podcast name and Feed ID', 'error');
+      return;
+    }
+
+    Modal.show('Add Podcast', `Add "${name}" (ID: ${id}) to Discovered Podcasts?`, async () => {
+      try {
+        const params = new URLSearchParams({
+          action: 'add_podcast',
+          podcast_name: name,
+          podcast_id: id,
+          extract_guests: extract ? 'true' : 'false'
+        });
+        await fetch(SETTINGS_WEBHOOK + '?' + params.toString(), {
+          method: 'GET',
+          mode: 'no-cors'
+        });
+        Toast.show(`"${name}" added to Discovered Podcasts`, 'success');
+        document.getElementById('add-podcast-name').value = '';
+        document.getElementById('add-podcast-id').value = '';
+        document.getElementById('add-podcast-extract').checked = false;
+        setTimeout(() => App.refresh(), 3000);
+      } catch (e) {
+        Toast.show('Failed to add podcast: ' + e.message, 'error');
+      }
+    });
+  }
+};
+
+// ============================================================
 // MODAL + TOAST
 // ============================================================
 const Modal = {
@@ -707,6 +939,7 @@ const App = {
   async init() {
     renderWorkflowButtons();
     await this.refresh();
+    Settings.load();
     this.refreshTimer = setInterval(() => this.refresh(), CONFIG.refreshInterval);
   },
 
