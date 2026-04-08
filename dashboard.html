@@ -132,6 +132,16 @@ tr:hover td { background: var(--bg-card-hover); }
 
 /* Pitch Preview */
 .pitch-preview { background: #1e2132; border-radius: 8px; padding: 16px; margin-top: 8px; font-size: 13px; line-height: 1.6; max-height: 300px; overflow-y: auto; white-space: pre-wrap; }
+
+/* Sheet Tabs */
+.sheet-tabs { display: flex; gap: 0; margin: -20px -20px 16px -20px; border-bottom: 2px solid var(--border); overflow-x: auto; }
+.sheet-tab { padding: 12px 20px; font-size: 13px; font-weight: 600; font-family: inherit; background: transparent; border: none; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; white-space: nowrap; transition: all 0.2s; }
+.sheet-tab:hover { color: var(--text-dim); background: rgba(99,102,241,0.05); }
+.sheet-tab.active { color: var(--accent); border-bottom-color: var(--accent); background: rgba(99,102,241,0.08); }
+.sheet-search { margin-bottom: 12px; }
+.sheet-search input { width: 100%; max-width: 320px; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border); background: #1e2132; color: var(--text); font-family: inherit; font-size: 13px; outline: none; }
+.sheet-search input:focus { border-color: var(--accent); }
+.sheet-footer { margin-top: 12px; font-size: 12px; color: var(--text-muted); display: flex; justify-content: space-between; }
 </style>
 </head>
 <body>
@@ -196,26 +206,25 @@ tr:hover td { background: var(--bg-card-hover); }
     </div>
   </div>
 
-  <!-- Outreach Table -->
+  <!-- Tabbed Data View -->
   <div class="card">
-    <h2><span class="dot" style="background:var(--purple)"></span> Outreach Pipeline</h2>
+    <div class="sheet-tabs" id="sheetTabs">
+      <button class="sheet-tab active" onclick="SheetView.switchTab('podcasts')">Discovered Podcasts</button>
+      <button class="sheet-tab" onclick="SheetView.switchTab('guests')">LW Guests</button>
+      <button class="sheet-tab" onclick="SheetView.switchTab('external')">External Guests</button>
+      <button class="sheet-tab" onclick="SheetView.switchTab('analytics')">Analytics</button>
+    </div>
     <div class="table-controls" id="tableFilters"></div>
-    <div class="table-wrap">
-      <table id="outreachTable">
-        <thead>
-          <tr>
-            <th onclick="Table.sort('score')">Score</th>
-            <th onclick="Table.sort('podcast')">Podcast</th>
-            <th onclick="Table.sort('guest')">Source Guest</th>
-            <th onclick="Table.sort('status')">Status</th>
-            <th onclick="Table.sort('email')">Email</th>
-            <th onclick="Table.sort('contacted')">Contacted</th>
-            <th onclick="Table.sort('response')">Response</th>
-          </tr>
-        </thead>
-        <tbody id="tableBody"></tbody>
+    <div class="sheet-search">
+      <input type="text" id="sheetSearch" placeholder="Search..." oninput="SheetView.search(this.value)">
+    </div>
+    <div class="table-wrap" id="sheetTableWrap">
+      <table id="sheetTable">
+        <thead id="sheetHead"></thead>
+        <tbody id="sheetBody"></tbody>
       </table>
     </div>
+    <div class="sheet-footer" id="sheetFooter"></div>
   </div>
 </div>
 
@@ -457,89 +466,188 @@ const Workflows = {
 };
 
 // ============================================================
-// TABLE
+// SHEET VIEW (Tabbed data browser)
 // ============================================================
-let tableData = [];
-let tableFilter = 'all';
-let tableSortKey = 'score';
-let tableSortDir = -1;
+const SheetView = {
+  currentTab: 'podcasts',
+  searchQuery: '',
+  sortCol: null,
+  sortDir: -1,
+  filter: 'all',
 
-const Table = {
-  render(podcasts) {
-    tableData = podcasts;
-    this.update();
-    this.renderFilters();
+  // Column configs per tab — which columns to show and how
+  tabConfig: {
+    podcasts: {
+      key: 'podcasts',
+      cols: ['Relevance Score','Podcast Name','Source Guest','Status','Email','Contacted Date','Response Type','Pitch Text','Email Subject'],
+      display: ['Score','Podcast','Source Guest','Status','Email','Contacted','Response','Pitch','Subject'],
+      statusCol: 'Status',
+      filters: ['all','pending','enriched','contacted','responded','no_email','guest_owned'],
+      defaultSort: 'Relevance Score',
+      expandable: true
+    },
+    guests: {
+      key: 'guests',
+      cols: ['Guest Name','Source Type','Original Episode Title','Original Podcast','Extraction Date','Verified','Processed'],
+      display: ['Guest Name','Type','Episode Title','Podcast','Extracted','Verified','Processed'],
+      defaultSort: 'Guest Name'
+    },
+    external: {
+      key: 'external',
+      cols: ['Guest Name','Source Podcast','Original Episode Title','Extraction Date','Verified','Processed'],
+      display: ['Guest Name','Source Podcast','Episode Title','Extracted','Verified','Processed'],
+      defaultSort: 'Guest Name'
+    },
+    analytics: {
+      key: 'analytics',
+      cols: null, // show all columns
+      defaultSort: null
+    }
   },
 
-  renderFilters() {
-    const statuses = ['all','pending','enriched','contacted','responded','no_email','guest_owned'];
-    document.getElementById('tableFilters').innerHTML = statuses.map(s =>
-      `<button class="filter-btn ${tableFilter === s ? 'active' : ''}" onclick="Table.filter('${s}')">${s === 'all' ? 'All' : s.replace('_',' ')}</button>`
-    ).join('');
+  switchTab(tab) {
+    this.currentTab = tab;
+    this.searchQuery = '';
+    this.sortCol = null;
+    this.sortDir = -1;
+    this.filter = 'all';
+    document.getElementById('sheetSearch').value = '';
+    document.querySelectorAll('.sheet-tab').forEach(t => t.classList.remove('active'));
+    document.querySelector(`.sheet-tab[onclick*="${tab}"]`).classList.add('active');
+    this.render();
   },
 
-  filter(status) {
-    tableFilter = status;
-    this.renderFilters();
-    this.update();
+  search(q) {
+    this.searchQuery = q.toLowerCase().trim();
+    this.render();
   },
 
-  sort(key) {
-    if (tableSortKey === key) tableSortDir *= -1;
-    else { tableSortKey = key; tableSortDir = -1; }
-    this.update();
+  sort(colIdx) {
+    if (this.sortCol === colIdx) this.sortDir *= -1;
+    else { this.sortCol = colIdx; this.sortDir = -1; }
+    this.render();
   },
 
-  update() {
-    let rows = [...tableData];
-    if (tableFilter !== 'all') {
-      rows = rows.filter(r => (r['Status'] || '').toLowerCase().trim() === tableFilter);
+  setFilter(f) {
+    this.filter = f;
+    this.render();
+  },
+
+  render() {
+    const cfg = this.tabConfig[this.currentTab];
+    const allData = DataService.cache[cfg.key] || [];
+    let data = [...allData];
+
+    // Filters (only for podcasts tab)
+    const filtersEl = document.getElementById('tableFilters');
+    if (cfg.filters) {
+      filtersEl.innerHTML = cfg.filters.map(f =>
+        `<button class="filter-btn ${this.filter === f ? 'active' : ''}" onclick="SheetView.setFilter('${f}')">${f === 'all' ? 'All' : f.replace('_',' ')}</button>`
+      ).join('');
+      if (this.filter !== 'all') {
+        data = data.filter(r => (r[cfg.statusCol] || '').toLowerCase().trim() === this.filter);
+      }
+    } else {
+      filtersEl.innerHTML = '';
     }
 
-    const keyMap = {
-      score: 'Relevance Score', podcast: 'Podcast Name', guest: 'Source Guest',
-      status: 'Status', email: 'Email', contacted: 'Contacted Date', response: 'Response Type'
-    };
-    const col = keyMap[tableSortKey] || 'Relevance Score';
-    rows.sort((a, b) => {
-      const va = (a[col] || '').toString();
-      const vb = (b[col] || '').toString();
-      const na = parseFloat(va), nb = parseFloat(vb);
-      if (!isNaN(na) && !isNaN(nb)) return (na - nb) * tableSortDir;
-      return va.localeCompare(vb) * tableSortDir;
-    });
+    // Search
+    if (this.searchQuery) {
+      data = data.filter(r => Object.values(r).some(v => (v || '').toString().toLowerCase().includes(this.searchQuery)));
+    }
 
-    const tbody = document.getElementById('tableBody');
-    tbody.innerHTML = rows.slice(0, 200).map((r, i) => {
-      const status = (r['Status'] || '').toLowerCase().trim();
-      const email = r['Email'] || '';
-      const emailDisplay = email.includes('@') ? email.split('@')[0].slice(0,8) + '@...' : '-';
-      const hasPitch = (r['Pitch Text'] || '').length > 10;
-      return `<tr onclick="Table.expand(${i}, this)" style="cursor:pointer">
-        <td><strong>${r['Relevance Score'] || '-'}</strong></td>
-        <td>${r['Podcast Name'] || '-'}</td>
-        <td style="color:var(--text-dim)">${r['Source Guest'] || '-'}</td>
-        <td><span class="badge badge-${status}">${status || '-'}</span></td>
-        <td style="font-size:12px;color:var(--text-muted)">${emailDisplay}</td>
-        <td style="font-size:12px">${r['Contacted Date'] || '-'}</td>
-        <td>${r['Response Type'] || '-'}</td>
+    // Determine columns
+    let cols, displayCols;
+    if (cfg.cols) {
+      cols = cfg.cols;
+      displayCols = cfg.display;
+    } else {
+      // Auto-detect from data
+      cols = data.length > 0 ? Object.keys(data[0]) : [];
+      displayCols = cols;
+    }
+
+    // Sort
+    const sortIdx = this.sortCol !== null ? this.sortCol : (cfg.defaultSort ? cols.indexOf(cfg.defaultSort) : -1);
+    if (sortIdx >= 0 && cols[sortIdx]) {
+      const sortKey = cols[sortIdx];
+      data.sort((a, b) => {
+        const va = (a[sortKey] || '').toString();
+        const vb = (b[sortKey] || '').toString();
+        const na = parseFloat(va), nb = parseFloat(vb);
+        if (!isNaN(na) && !isNaN(nb)) return (na - nb) * this.sortDir;
+        return va.localeCompare(vb) * this.sortDir;
+      });
+    }
+
+    // Render header
+    const visibleCols = cols.filter(c => c !== 'Pitch Text' && c !== 'Email Subject');
+    const visibleDisplay = displayCols.filter((d, i) => cols[i] !== 'Pitch Text' && cols[i] !== 'Email Subject');
+    document.getElementById('sheetHead').innerHTML = `<tr>${visibleDisplay.map((d, i) => {
+      const realIdx = cols.indexOf(visibleCols[i]);
+      const arrow = this.sortCol === realIdx ? (this.sortDir > 0 ? ' ↑' : ' ↓') : '';
+      return `<th onclick="SheetView.sort(${realIdx})" style="cursor:pointer">${d}${arrow}</th>`;
+    }).join('')}</tr>`;
+
+    // Render rows
+    const maxRows = 300;
+    const tbody = document.getElementById('sheetBody');
+    tbody.innerHTML = data.slice(0, maxRows).map((r, rowIdx) => {
+      const isExpandable = cfg.expandable && (r['Pitch Text'] || '').length > 5;
+      return `<tr ${isExpandable ? `onclick="SheetView.expand(${rowIdx}, this)" style="cursor:pointer"` : ''}>
+        ${visibleCols.map(c => {
+          let val = (r[c] || '').toString();
+          // Status badge
+          if (c === cfg.statusCol && cfg.filters) {
+            const s = val.toLowerCase().trim();
+            return `<td><span class="badge badge-${s}">${s || '-'}</span></td>`;
+          }
+          // Email — truncate
+          if (c === 'Email') {
+            const display = val.includes('@') ? val.split('@')[0].slice(0,10) + '@...' : (val || '-');
+            return `<td style="font-size:12px;color:var(--text-muted)" title="${val}">${display}</td>`;
+          }
+          // Score — bold
+          if (c === 'Relevance Score') {
+            return `<td><strong>${val || '-'}</strong></td>`;
+          }
+          // Boolean
+          if (val === 'TRUE') return `<td style="color:var(--success)">Yes</td>`;
+          if (val === 'FALSE') return `<td style="color:var(--text-muted)">No</td>`;
+          // Truncate long text
+          if (val.length > 50) val = val.slice(0, 47) + '...';
+          return `<td>${val || '-'}</td>`;
+        }).join('')}
       </tr>`;
-    }).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:40px">No results</td></tr>';
+    }).join('') || `<tr><td colspan="${visibleCols.length}" style="text-align:center;color:var(--text-muted);padding:40px">No data</td></tr>`;
+
+    // Footer
+    document.getElementById('sheetFooter').innerHTML = `
+      <span>${data.length} row${data.length !== 1 ? 's' : ''}${data.length > maxRows ? ` (showing first ${maxRows})` : ''}${this.searchQuery ? ' (filtered)' : ''}</span>
+      <span>${allData.length} total in sheet</span>`;
   },
 
-  expand(idx, row) {
+  expand(rowIdx, row) {
     const existing = row.parentElement.querySelector('.expanded-row');
     if (existing) { existing.remove(); return; }
 
-    const filtered = tableFilter === 'all' ? tableData : tableData.filter(r => (r['Status'] || '').toLowerCase().trim() === tableFilter);
-    const r = filtered[idx];
+    const cfg = this.tabConfig[this.currentTab];
+    let data = [...(DataService.cache[cfg.key] || [])];
+    if (this.filter !== 'all' && cfg.statusCol) {
+      data = data.filter(r => (r[cfg.statusCol] || '').toLowerCase().trim() === this.filter);
+    }
+    if (this.searchQuery) {
+      data = data.filter(r => Object.values(r).some(v => (v || '').toString().toLowerCase().includes(this.searchQuery)));
+    }
+    const r = data[rowIdx];
     if (!r) return;
 
     const pitch = r['Pitch Text'] || 'No pitch generated';
     const subject = r['Email Subject'] || '';
+    const visibleCols = (cfg.cols || Object.keys(r)).filter(c => c !== 'Pitch Text' && c !== 'Email Subject');
     const tr = document.createElement('tr');
     tr.className = 'expanded-row';
-    tr.innerHTML = `<td colspan="7" style="padding:12px">
+    tr.innerHTML = `<td colspan="${visibleCols.length}" style="padding:12px">
       ${subject ? `<div style="font-size:12px;color:var(--text-dim);margin-bottom:6px">Subject: <strong style="color:var(--text)">${subject}</strong></div>` : ''}
       <div class="pitch-preview">${pitch}</div>
     </td>`;
@@ -592,7 +700,7 @@ const App = {
       renderPipeline(m);
       renderStatusChart(m);
       renderActivityFeed(data);
-      Table.render(data.podcasts);
+      SheetView.render();
       const now = new Date();
       document.getElementById('lastUpdated').textContent = `Updated ${now.toLocaleTimeString()}`;
     } catch (e) {
