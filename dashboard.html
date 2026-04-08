@@ -266,22 +266,41 @@ const CONFIG = {
 const DataService = {
   cache: {},
 
-  sheetUrl(tab) {
-    return `https://docs.google.com/spreadsheets/d/${CONFIG.sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab)}`;
-  },
+  // Use Google Visualization API (JSONP-like) which doesn't need CORS
+  fetchSheet(tab) {
+    return new Promise((resolve) => {
+      const callbackName = 'gvizCb_' + tab.replace(/[^a-zA-Z]/g, '') + '_' + Date.now();
+      const url = `https://docs.google.com/spreadsheets/d/${CONFIG.sheetId}/gviz/tq?tqx=out:json;responseHandler:${callbackName}&sheet=${encodeURIComponent(tab)}`;
 
-  async fetchSheet(tab) {
-    try {
-      const resp = await fetch(this.sheetUrl(tab));
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const text = await resp.text();
-      if (text.includes('<!DOCTYPE') || text.includes('<html')) throw new Error('Sheet not published');
-      const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
-      return parsed.data;
-    } catch (e) {
-      console.error(`Failed to fetch ${tab}:`, e);
-      return [];
-    }
+      window[callbackName] = function(response) {
+        try {
+          const table = response.table;
+          const headers = table.cols.map(c => c.label || c.id);
+          const rows = table.rows.map(row => {
+            const obj = {};
+            row.c.forEach((cell, i) => {
+              obj[headers[i]] = cell ? (cell.v != null ? String(cell.v) : '') : '';
+            });
+            return obj;
+          });
+          resolve(rows);
+        } catch (e) {
+          console.error(`Failed to parse ${tab}:`, e);
+          resolve([]);
+        }
+        // Cleanup
+        delete window[callbackName];
+        script.remove();
+      };
+
+      const script = document.createElement('script');
+      script.src = url;
+      script.onerror = () => { resolve([]); delete window[callbackName]; script.remove(); };
+      document.head.appendChild(script);
+
+      // Timeout fallback
+      setTimeout(() => { if (window[callbackName]) { resolve([]); delete window[callbackName]; script.remove(); } }, 15000);
+    });
   },
 
   async fetchAll() {
