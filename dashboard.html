@@ -819,16 +819,17 @@ const Settings = {
       const data = await DataService.fetchSheet('Settings');
       if (!data || data.length === 0) return;
       const map = {};
-      data.forEach(row => { if (row.Key) map[row.Key] = row.Value; });
+      data.forEach(row => { if (row.Key) map[row.Key] = (row.Value || '').replace(/^v:/, ''); });
 
       if (map.daily_limit) document.getElementById('set-daily-limit').value = map.daily_limit;
       if (map.send_hour) document.getElementById('set-send-hour').value = map.send_hour;
       if (map.relevance_threshold) document.getElementById('set-relevance').value = map.relevance_threshold;
-      if (map.bypass_day_check === 'true') document.getElementById('set-bypass-day').checked = true;
+      // Boolean stored as _true/_false to avoid Google Sheets auto-parsing
+      if (map.bypass_day_check === '_true') document.getElementById('set-bypass-day').checked = true;
 
-      // Sending days
+      // Sending days stored with pipe delimiter
       if (map.sending_days) {
-        const days = map.sending_days.split(',').map(d => d.trim());
+        const days = map.sending_days.split('|').map(d => d.trim());
         document.querySelectorAll('.day-check').forEach(cb => {
           cb.checked = days.includes(cb.value);
         });
