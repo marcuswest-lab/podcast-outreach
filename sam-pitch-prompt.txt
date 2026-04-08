@@ -1,0 +1,105 @@
+SAM BELIEV — PODCAST GUEST PITCH STRATEGY
+==============================================================================
+
+1. PROFESSIONAL IDENTITY: SAM BELIEV — The Renaissance Operator
+
+ * Core Background: Former marine mechanical Engineer (10+ years in offshore Oil and gas offshore Wind) turned Founder of LaWayra.
+ * The Business: Built South America's #1 rated Ayahuasca retreat (730+ 5-star reviews) with zero prior business background in a foreign land.
+ * The Podcast: Host of The Ayahuasca Podcast (120+ episodes); interviewed icons like Gabor Maté, Dennis McKenna, and Wade Davis.
+ * The Science: Co-organzing the world's largest QEEG brain-mapping study on Ayahuasca (350+ scans) with Luke Jensen.
+ * The Mission: Rebranding Colombia from Cocaine to Ayahuasca through "Sacred Reciprocity."
+ * Personal Resilience: Raised 3 children (ages 1, 3, 5) in the Colombian countryside while scaling a high-stakes business through many challenges and burnout.
+
+==============================================================================
+
+2. PITCH STRATEGY: THE PERSONA SHIFT
+
+To maximize booking rate, categorize personality into three distinct "modes" depending on the podcast's audience:
+
+ * The Engineer: Best for Biohacking, Tech, or Science podcasts. Focuses on neuroplasticity, QEEG data, risk mitigation, and "Engineering the perfect Ayahuasca Experience."
+ * The Frontier Founder: Best for Business, Entrepreneurship, or Lifestyle podcasts. Focuses on the "Matrix Exit," scaling a 5-star service in a frontier market, and "Sacred Reciprocity."
+ * The Warrior-Healer: Best for Men's Work, Sports, or Veteran podcasts. Focuses on boxing background, the MMA/TBI study, and a no-nonsense, "harder than life" approach to healing.
+
+==============================================================================
+
+3. READY-TO-USE TEMPLATES
+
+--- Template A: The Science & Systems Pitch ---
+Target: Biohacking, Tech, or Mental Health Podcasts
+Subject: Interview Inquiry: Engineering the perfect Ayahuasca experience (730+ reviews)
+
+Email:
+Hi [Host Name]
+I am reaching out as a peer in the [Niche] space. I am Sam Believ, a former Offshore Systems Engineer who spent a decade in Big Oil before founding LaWayra, now the #1 rated Ayahuasca retreat in South America.
+I noticed your recent episode on [Specific Topic], and I believe I can provide a unique, data-driven perspective for your audience that avoids the typical spiritual fluff.
+
+Potential Discussion Topics:
+ * Engineering the perfect Ayahuasca Experience: How I applied offshore safety protocols and SOPs to spiritual retreats.
+ * Measuring the Mystical: Preliminary findings from our current study involving 350+ QEEG brain maps of Ayahuasca participants.
+ * TBI and Athletes: Our work with MMA fighters and using plant medicine to rewire PTSD-affected brains.
+
+Proof & Ecosystem:
+ * Speaker Site: www.sambeliev.com
+ * The Business: www.lawayra.com
+ * The Podcast: www.ayahuascapodcast.com
+
+Would you be open to a 10-minute chemistry call to see if this is a fit?
+
+IG DM Version:
+[Handle]
+Hi [Name], love the focus of the show. I am an offshore engineer turned founder of the top-rated Ayahuasca retreat in South America (LaWayra). We are currently running a massive QEEG brain-mapping study on participants. I'd love to share the data-driven side of plant medicine with your audience. No fluff, just systems and science. Check my work at www.sambeliev.com and let me know if you want to chat.
+
+--- Template B: The Frontier Entrepreneur Pitch ---
+Target: Business, Lifestyle, or Growth Podcasts
+Subject: Guest: Building a #1 rated business in the Colombian jungle
+
+Email:
+Hi [Host Name]
+My name is Sam Believ. I'm a former engineer who made a "Matrix Exit" from corporate oil and gas to build a regenerative business in the Colombian countryside.
+Today, LaWayra is the highest-rated retreat in the region (730+ 5 star reviews), but the journey involved navigating two foreign languages, raising three young children in the jungle, and rebranding a country from cocaine to ancestral medicine.
+
+Potential Discussion Topics:
+ * The Frontier Pivot: Moving from Big Oil to a frontier market with zero business background.
+ * Scaling Quality: How we reached 730+ 5-star reviews by treating healing as a human right, not a luxury.
+ * Resilience: Managing a high-growth startup while raising kids (ages 1, 3, and 5) in rural Colombia through personal and professional collapse.
+
+Proof & Ecosystem:
+ * Speaker Site: www.sambeliev.com
+ * The Business: www.lawayra.com
+ * The Podcast: www.ayahuascapodcast.com
+
+Are you currently booking guests for next month?
+
+IG DM Version:
+[Handle]
+Hey [Name], I've been following your episodes on [Topic]. I'm an engineer who left the corporate world to build the #1 rated Ayahuasca retreat in Colombia. I've hosted 2,500+ guests and recorded 120+ episodes with guys like Gabor Maté. I'd love to talk about the grit of building a top-tier business in a foreign land while raising 3 kids. Check me out at www.sambeliev.com.
+
+==============================================================================
+
+4. KEY DISCUSSION HOOKS
+
+ * The TBI Connection: How the "warrior-class" (MMA fighters) uses medicine to find vulnerability and heal brain trauma.
+ * Agnostic Spirituality: Why most indigenous practices don't suit foreigners and how to use a gradual "psycholytic" approach to prevent psychological harm.
+ * Rebranding Colombia: The mission to shift the national brand from Cocaine to Ayahuasca to heal the social fractures of the country.
+ * The "Gringo Experience" vs. Reality: Debunking the romanticized version of the Amazon and discussing the "Dark Side" of the retreat industry (spiritual ego and cult dynamics).
+
+==============================================================================
+
+WORKFLOW INTEGRATION NOTES:
+
+The N8N Workflow 4 will use Claude AI to generate personalized pitches using the
+templates and strategy above. The AI will:
+
+1. Analyze the target podcast's description and recent episodes
+2. Select the best persona mode (Engineer / Frontier Founder / Warrior-Healer)
+3. Customize the appropriate template (A or B) with specific references
+4. Generate both an Email version and an IG DM version
+5. Create a personalized subject line
+
+Variables injected by the workflow:
+- {{podcast_name}} - Name of target podcast
+- {{podcast_description}} - Description from Listen Notes
+- {{recent_episodes}} - List of recent episode titles
+- {{source_guest}} - Name of the guest that led to this discovery
+- {{guest_source_type}} - "own_guest" or "external_guest"
+- {{host_name}} - Podcast host name (if available)

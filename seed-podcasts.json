@@ -1,0 +1,81 @@
+{
+  "description": "Seed podcasts for Funnel B - External guest extraction",
+  "instructions": "Add 5-10 psychedelic-focused podcasts. These will be used to extract guests, then find where those guests have appeared on other podcasts.",
+  "seed_podcasts": [
+    {
+      "name": "Psychedelics Today",
+      "spotify_show_id": "",
+      "notes": "Primary seed podcast - major player in psychedelic space",
+      "priority": 1
+    },
+    {
+      "name": "",
+      "spotify_show_id": "",
+      "notes": "Add podcast name, Spotify Show ID, and notes",
+      "priority": 2
+    },
+    {
+      "name": "",
+      "spotify_show_id": "",
+      "notes": "",
+      "priority": 3
+    },
+    {
+      "name": "",
+      "spotify_show_id": "",
+      "notes": "",
+      "priority": 4
+    },
+    {
+      "name": "",
+      "spotify_show_id": "",
+      "notes": "",
+      "priority": 5
+    },
+    {
+      "name": "",
+      "spotify_show_id": "",
+      "notes": "",
+      "priority": 6
+    },
+    {
+      "name": "",
+      "spotify_show_id": "",
+      "notes": "",
+      "priority": 7
+    },
+    {
+      "name": "",
+      "spotify_show_id": "",
+      "notes": "",
+      "priority": 8
+    },
+    {
+      "name": "",
+      "spotify_show_id": "",
+      "notes": "",
+      "priority": 9
+    },
+    {
+      "name": "",
+      "spotify_show_id": "",
+      "notes": "",
+      "priority": 10
+    }
+  ],
+  "how_to_find_spotify_show_id": "1. Search for podcast on Spotify, 2. Click 'Share' → 'Copy Show Link', 3. Extract ID from URL: https://open.spotify.com/show/{SHOW_ID}",
+  "recommended_podcasts_to_consider": [
+    "Psychedelics Today",
+    "The Third Wave Podcast",
+    "Awareness Explorers",
+    "Adventures Through The Mind",
+    "Psychedelic Salon",
+    "Plant Medicine Podcast",
+    "Duncan Trussell Family Hour",
+    "Aubrey Marcus Podcast",
+    "The Tim Ferriss Show (has psychedelic episodes)",
+    "Joe Rogan Experience (has psychedelic episodes)",
+    "MAPS Podcast",
+    "Vital Psychedelic Conversations"
+  ]
+}

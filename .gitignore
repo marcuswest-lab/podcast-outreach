@@ -1,0 +1,31 @@
+# API Credentials - NEVER COMMIT THESE
+api-credentials.env
+.mcp.json
+
+# Backup files
+*.backup
+*.bak
+backups/
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Claude Code local config
+.claude/
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp

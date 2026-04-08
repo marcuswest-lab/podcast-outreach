@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LaWayra Podcast Outreach Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5/papaparse.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg: #0f1117; --bg-card: #1a1d27; --bg-card-hover: #22253a;
+  --text: #e2e8f0; --text-dim: #94a3b8; --text-muted: #64748b;
+  --accent: #6366f1; --success: #22c55e; --warning: #f59e0b;
+  --danger: #ef4444; --info: #3b82f6; --purple: #a855f7;
+  --border: #2d3148; --radius: 12px;
+}
+body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+.container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+
+/* Header */
+.header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; flex-wrap: wrap; gap: 12px; }
+.header h1 { font-size: 24px; font-weight: 700; }
+.header h1 span { color: var(--accent); }
+.header-right { display: flex; align-items: center; gap: 12px; }
+.last-updated { font-size: 13px; color: var(--text-dim); }
+.btn { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; transition: all 0.2s; }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+.btn-accent { background: var(--accent); color: white; }
+.btn-accent:hover { background: #5558e6; }
+.btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-dim); }
+.btn-outline:hover { border-color: var(--accent); color: var(--text); }
+.btn-danger { background: var(--danger); color: white; }
+.btn-danger:hover { background: #dc2626; }
+.btn-success { background: var(--success); color: white; }
+.btn-success:hover { background: #16a34a; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Metric Cards */
+.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.metric-card { background: var(--bg-card); border-radius: var(--radius); padding: 20px; border: 1px solid var(--border); }
+.metric-card .label { font-size: 13px; color: var(--text-dim); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+.metric-card .value { font-size: 32px; font-weight: 700; }
+.metric-card .sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+.metric-card.accent .value { color: var(--accent); }
+.metric-card.success .value { color: var(--success); }
+.metric-card.warning .value { color: var(--warning); }
+.metric-card.info .value { color: var(--info); }
+
+/* Grid Layout */
+.grid-2 { display: grid; grid-template-columns: 1.5fr 1fr; gap: 20px; margin-bottom: 24px; }
+@media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
+
+/* Cards */
+.card { background: var(--bg-card); border-radius: var(--radius); border: 1px solid var(--border); padding: 20px; }
+.card h2 { font-size: 16px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.card h2 .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
+/* Pipeline */
+.pipeline-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.pipeline-bar .label { width: 100px; font-size: 13px; color: var(--text-dim); text-align: right; flex-shrink: 0; }
+.pipeline-bar .bar-wrap { flex: 1; background: #1e2132; border-radius: 6px; height: 28px; position: relative; overflow: hidden; }
+.pipeline-bar .bar { height: 100%; border-radius: 6px; transition: width 0.6s ease; display: flex; align-items: center; padding-left: 10px; font-size: 12px; font-weight: 600; min-width: fit-content; }
+.pipeline-bar .count { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 12px; font-weight: 600; }
+
+/* Workflow Buttons */
+.wf-grid { display: grid; gap: 10px; }
+.wf-btn { display: flex; align-items: center; gap: 12px; background: #1e2132; border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; cursor: pointer; transition: all 0.2s; }
+.wf-btn:hover { border-color: var(--accent); background: var(--bg-card-hover); }
+.wf-btn.running { border-color: var(--warning); }
+.wf-btn .wf-num { width: 32px; height: 32px; border-radius: 8px; background: var(--accent); color: white; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+.wf-btn.wf-send .wf-num { background: var(--danger); }
+.wf-btn .wf-info { flex: 1; }
+.wf-btn .wf-name { font-size: 13px; font-weight: 600; }
+.wf-btn .wf-desc { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.wf-btn .wf-status { font-size: 11px; padding: 3px 8px; border-radius: 6px; }
+.wf-btn .spinner { width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Activity Feed */
+.feed { max-height: 320px; overflow-y: auto; }
+.feed::-webkit-scrollbar { width: 4px; }
+.feed::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.feed-item { padding: 10px 0; border-bottom: 1px solid var(--border); }
+.feed-item:last-child { border-bottom: none; }
+.feed-item .feed-date { font-size: 11px; color: var(--text-muted); }
+.feed-item .feed-text { font-size: 13px; margin-top: 2px; }
+
+/* Status Badges */
+.badge { font-size: 11px; padding: 3px 8px; border-radius: 6px; font-weight: 500; display: inline-block; }
+.badge-pending { background: #374151; color: #9ca3af; }
+.badge-enriched { background: #1e3a5f; color: #60a5fa; }
+.badge-contacted { background: #422006; color: #fbbf24; }
+.badge-responded { background: #052e16; color: #4ade80; }
+.badge-no_email { background: #450a0a; color: #fca5a5; }
+.badge-guest_owned { background: #2e1065; color: #c4b5fd; }
+
+/* Table */
+.table-controls { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.filter-btn { padding: 5px 12px; font-size: 12px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--text-dim); cursor: pointer; font-family: inherit; }
+.filter-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+.filter-btn:hover:not(.active) { border-color: var(--text-muted); }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; padding: 10px 12px; color: var(--text-dim); font-weight: 500; border-bottom: 1px solid var(--border); cursor: pointer; white-space: nowrap; }
+th:hover { color: var(--text); }
+td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+tr:hover td { background: var(--bg-card-hover); }
+.table-wrap { overflow-x: auto; max-height: 500px; overflow-y: auto; }
+.table-wrap::-webkit-scrollbar { width: 4px; height: 4px; }
+.table-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* Toast */
+.toast-container { position: fixed; top: 20px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 8px; }
+.toast { padding: 12px 20px; border-radius: 8px; font-size: 13px; font-weight: 500; animation: slideIn 0.3s ease; max-width: 360px; }
+.toast-success { background: #052e16; border: 1px solid #166534; color: #4ade80; }
+.toast-error { background: #450a0a; border: 1px solid #991b1b; color: #fca5a5; }
+.toast-info { background: #1e3a5f; border: 1px solid #1d4ed8; color: #60a5fa; }
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+/* Loading */
+.loading-overlay { display: flex; align-items: center; justify-content: center; min-height: 200px; color: var(--text-dim); }
+.loading-overlay .spinner-lg { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 12px; }
+
+/* Modal */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 999; display: flex; align-items: center; justify-content: center; }
+.modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; max-width: 440px; width: 90%; }
+.modal h3 { font-size: 18px; margin-bottom: 12px; }
+.modal p { font-size: 14px; color: var(--text-dim); margin-bottom: 20px; line-height: 1.5; }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.hidden { display: none !important; }
+
+/* Pitch Preview */
+.pitch-preview { background: #1e2132; border-radius: 8px; padding: 16px; margin-top: 8px; font-size: 13px; line-height: 1.6; max-height: 300px; overflow-y: auto; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Header -->
+  <div class="header">
+    <h1><span>LaWayra</span> Podcast Outreach</h1>
+    <div class="header-right">
+      <span class="last-updated" id="lastUpdated">Loading...</span>
+      <button class="btn btn-outline" onclick="App.refresh()">Refresh</button>
+    </div>
+  </div>
+
+  <!-- Metric Cards -->
+  <div class="metrics" id="metrics">
+    <div class="metric-card accent">
+      <div class="label">Guests Extracted</div>
+      <div class="value" id="m-guests">--</div>
+      <div class="sub" id="m-guests-sub"></div>
+    </div>
+    <div class="metric-card info">
+      <div class="label">Podcasts Discovered</div>
+      <div class="value" id="m-podcasts">--</div>
+      <div class="sub" id="m-podcasts-sub"></div>
+    </div>
+    <div class="metric-card warning">
+      <div class="label">Emails Sent</div>
+      <div class="value" id="m-sent">--</div>
+      <div class="sub" id="m-sent-sub"></div>
+    </div>
+    <div class="metric-card success">
+      <div class="label">Response Rate</div>
+      <div class="value" id="m-rate">--</div>
+      <div class="sub" id="m-rate-sub"></div>
+    </div>
+  </div>
+
+  <!-- Pipeline + Workflow Controls -->
+  <div class="grid-2">
+    <div class="card">
+      <h2><span class="dot" style="background:var(--accent)"></span> Pipeline Overview</h2>
+      <div id="pipeline"></div>
+    </div>
+    <div class="card">
+      <h2><span class="dot" style="background:var(--warning)"></span> Run Workflows</h2>
+      <div class="wf-grid" id="wfGrid"></div>
+    </div>
+  </div>
+
+  <!-- Charts + Activity Feed -->
+  <div class="grid-2">
+    <div class="card">
+      <h2><span class="dot" style="background:var(--info)"></span> Status Breakdown</h2>
+      <div style="max-height:300px; display:flex; justify-content:center;">
+        <canvas id="statusChart"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <h2><span class="dot" style="background:var(--success)"></span> Recent Activity</h2>
+      <div class="feed" id="activityFeed"></div>
+    </div>
+  </div>
+
+  <!-- Outreach Table -->
+  <div class="card">
+    <h2><span class="dot" style="background:var(--purple)"></span> Outreach Pipeline</h2>
+    <div class="table-controls" id="tableFilters"></div>
+    <div class="table-wrap">
+      <table id="outreachTable">
+        <thead>
+          <tr>
+            <th onclick="Table.sort('score')">Score</th>
+            <th onclick="Table.sort('podcast')">Podcast</th>
+            <th onclick="Table.sort('guest')">Source Guest</th>
+            <th onclick="Table.sort('status')">Status</th>
+            <th onclick="Table.sort('email')">Email</th>
+            <th onclick="Table.sort('contacted')">Contacted</th>
+            <th onclick="Table.sort('response')">Response</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toasts"></div>
+
+<!-- Confirm Modal (hidden) -->
+<div class="modal-overlay hidden" id="confirmModal">
+  <div class="modal">
+    <h3 id="modalTitle">Confirm Action</h3>
+    <p id="modalMsg"></p>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="Modal.close()">Cancel</button>
+      <button class="btn btn-accent" id="modalConfirmBtn">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CONFIG
+// ============================================================
+const CONFIG = {
+  sheetId: '16l7E6Cox0fT5ktCXLjdJA6IWkY7P3EEWGg2hViYKwIY',
+  n8nUrl: 'https://server.lawayraserver.com',
+  refreshInterval: 300000, // 5 min
+  workflows: [
+    { webhook: 'https://server.lawayraserver.com/webhook/lw-wf1-guest-extraction', name: 'Guest Extraction', desc: 'Extract guests from Ayahuasca Podcast YouTube', num: 1 },
+    { webhook: 'https://server.lawayraserver.com/webhook/lw-wf2-podcast-discovery', name: 'Podcast Discovery', desc: 'Find podcasts via guest appearances', num: 2 },
+    { webhook: 'https://server.lawayraserver.com/webhook/lw-wf3-external-guests', name: 'External Guest Extraction', desc: 'Extract guests from discovered podcasts', num: 3 },
+    { webhook: 'https://server.lawayraserver.com/webhook/lw-wf4-enrich-pitch', name: 'Enrich & Generate Pitches', desc: 'Gemini analysis + pitch generation', num: 4 },
+    { webhook: 'https://server.lawayraserver.com/webhook/lw-wf5-send-outreach', name: 'Send Outreach', desc: 'Send emails via Drip (Tue-Thu)', num: 5, danger: true },
+  ]
+};
+
+// ============================================================
+// DATA SERVICE
+// ============================================================
+const DataService = {
+  cache: {},
+
+  sheetUrl(tab) {
+    return `https://docs.google.com/spreadsheets/d/${CONFIG.sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab)}`;
+  },
+
+  async fetchSheet(tab) {
+    try {
+      const resp = await fetch(this.sheetUrl(tab));
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const text = await resp.text();
+      if (text.includes('<!DOCTYPE') || text.includes('<html')) throw new Error('Sheet not published');
+      const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
+      return parsed.data;
+    } catch (e) {
+      console.error(`Failed to fetch ${tab}:`, e);
+      return [];
+    }
+  },
+
+  async fetchAll() {
+    const [guests, podcasts, external, analytics] = await Promise.all([
+      this.fetchSheet('LW Guests'),
+      this.fetchSheet('Discovered Podcasts'),
+      this.fetchSheet('External Guests'),
+      this.fetchSheet('Analytics')
+    ]);
+    this.cache = { guests, podcasts, external, analytics, ts: Date.now() };
+    return this.cache;
+  }
+};
+
+// ============================================================
+// METRICS
+// ============================================================
+const Metrics = {
+  compute(data) {
+    const { guests, podcasts, external } = data;
+    const statusCounts = {};
+    let contacted = 0, responded = 0, withEmail = 0;
+
+    podcasts.forEach(p => {
+      const s = (p['Status'] || '').toLowerCase().trim();
+      statusCounts[s] = (statusCounts[s] || 0) + 1;
+      if (s === 'contacted' || s === 'responded') contacted++;
+      if (s === 'responded') responded++;
+      if ((p['Email'] || '').includes('@')) withEmail++;
+    });
+
+    return {
+      totalGuests: guests.length + external.length,
+      lwGuests: guests.length,
+      extGuests: external.length,
+      totalPodcasts: podcasts.length,
+      withEmail,
+      contacted,
+      responded,
+      responseRate: contacted > 0 ? ((responded / contacted) * 100).toFixed(1) : '0',
+      statusCounts,
+      enriched: statusCounts['enriched'] || 0,
+      pending: statusCounts['pending'] || 0,
+    };
+  }
+};
+
+// ============================================================
+// UI RENDERERS
+// ============================================================
+function renderMetrics(m) {
+  document.getElementById('m-guests').textContent = m.totalGuests;
+  document.getElementById('m-guests-sub').textContent = `${m.lwGuests} own + ${m.extGuests} external`;
+  document.getElementById('m-podcasts').textContent = m.totalPodcasts;
+  document.getElementById('m-podcasts-sub').textContent = `${m.withEmail} with email`;
+  document.getElementById('m-sent').textContent = m.contacted;
+  document.getElementById('m-sent-sub').textContent = `${m.enriched} ready to send`;
+  document.getElementById('m-rate').textContent = m.responseRate + '%';
+  document.getElementById('m-rate-sub').textContent = `${m.responded} of ${m.contacted} replied`;
+}
+
+function renderPipeline(m) {
+  const stages = [
+    { key: 'pending', label: 'Pending', color: '#6b7280' },
+    { key: 'enriched', label: 'Enriched', color: '#3b82f6' },
+    { key: 'contacted', label: 'Contacted', color: '#f59e0b' },
+    { key: 'responded', label: 'Responded', color: '#22c55e' },
+    { key: 'no_email', label: 'No Email', color: '#ef4444' },
+    { key: 'guest_owned', label: 'Guest Owned', color: '#a855f7' },
+  ];
+  const max = Math.max(...stages.map(s => m.statusCounts[s.key] || 0), 1);
+  const el = document.getElementById('pipeline');
+  el.innerHTML = stages.map(s => {
+    const count = m.statusCounts[s.key] || 0;
+    const pct = Math.max((count / max) * 100, count > 0 ? 8 : 0);
+    return `<div class="pipeline-bar">
+      <div class="label">${s.label}</div>
+      <div class="bar-wrap">
+        <div class="bar" style="width:${pct}%;background:${s.color}">${count}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+let statusChart = null;
+function renderStatusChart(m) {
+  const ctx = document.getElementById('statusChart').getContext('2d');
+  const labels = ['Pending','Enriched','Contacted','Responded','No Email','Guest Owned'];
+  const keys = ['pending','enriched','contacted','responded','no_email','guest_owned'];
+  const colors = ['#6b7280','#3b82f6','#f59e0b','#22c55e','#ef4444','#a855f7'];
+  const values = keys.map(k => m.statusCounts[k] || 0);
+
+  if (statusChart) {
+    statusChart.data.datasets[0].data = values;
+    statusChart.update();
+    return;
+  }
+
+  statusChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{ data: values, backgroundColor: colors, borderWidth: 0 }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { position: 'right', labels: { color: '#94a3b8', font: { size: 12 }, padding: 12 } }
+      },
+      cutout: '65%'
+    }
+  });
+}
+
+function renderActivityFeed(data) {
+  const items = [];
+  data.podcasts.forEach(p => {
+    const date = p['Contacted Date'] || p['Discovery Date'] || '';
+    if (date) {
+      const status = (p['Status'] || '').toLowerCase().trim();
+      const action = status === 'contacted' ? 'Emailed' : status === 'enriched' ? 'Pitch ready for' : 'Discovered';
+      items.push({ date, text: `${action}: ${p['Podcast Name'] || 'Unknown'}`, via: p['Source Guest'] || '', status });
+    }
+  });
+  data.guests.forEach(g => {
+    const date = g['Extraction Date'] || '';
+    if (date) items.push({ date, text: `Guest extracted: ${g['Guest Name'] || 'Unknown'}`, status: 'guest' });
+  });
+
+  items.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  const feed = document.getElementById('activityFeed');
+  feed.innerHTML = items.slice(0, 25).map(i => `
+    <div class="feed-item">
+      <div class="feed-date">${i.date}${i.via ? ' &middot; via ' + i.via : ''}</div>
+      <div class="feed-text">${i.text}</div>
+    </div>`).join('') || '<div style="color:var(--text-muted);padding:20px;text-align:center">No activity yet</div>';
+}
+
+// ============================================================
+// WORKFLOW BUTTONS
+// ============================================================
+function renderWorkflowButtons() {
+  const grid = document.getElementById('wfGrid');
+  grid.innerHTML = CONFIG.workflows.map(wf => `
+    <div class="wf-btn ${wf.danger ? 'wf-send' : ''}" id="wf-${wf.num}" onclick="Workflows.run('${wf.webhook}','${wf.name}',${!!wf.danger},${wf.num})">
+      <div class="wf-num">${wf.num}</div>
+      <div class="wf-info">
+        <div class="wf-name">${wf.name}</div>
+        <div class="wf-desc">${wf.desc}</div>
+      </div>
+    </div>`).join('');
+}
+
+const Workflows = {
+  async run(webhookUrl, name, isDanger, num) {
+    const msg = isDanger
+      ? `This will send real outreach emails to podcast hosts. Are you sure?`
+      : `Run "${name}" workflow?`;
+
+    Modal.show(`Run: ${name}`, msg, async () => {
+      const btn = document.getElementById(`wf-${num}`);
+      btn.classList.add('running');
+      btn.innerHTML = btn.innerHTML.replace('</div></div>', '<div class="spinner"></div></div></div>');
+
+      try {
+        await fetch(webhookUrl + '?source=dashboard&t=' + Date.now(), {
+          method: 'GET',
+          mode: 'no-cors'
+        });
+        // no-cors mode: response is opaque but webhook fires successfully
+        Toast.show(`${name} triggered! Check n8n for progress.`, 'success');
+        setTimeout(() => App.refresh(), 30000);
+      } catch (e) {
+        Toast.show(`Failed to trigger ${name}: ${e.message}`, 'error');
+      } finally {
+        btn.classList.remove('running');
+        renderWorkflowButtons();
+      }
+    });
+  }
+};
+
+// ============================================================
+// TABLE
+// ============================================================
+let tableData = [];
+let tableFilter = 'all';
+let tableSortKey = 'score';
+let tableSortDir = -1;
+
+const Table = {
+  render(podcasts) {
+    tableData = podcasts;
+    this.update();
+    this.renderFilters();
+  },
+
+  renderFilters() {
+    const statuses = ['all','pending','enriched','contacted','responded','no_email','guest_owned'];
+    document.getElementById('tableFilters').innerHTML = statuses.map(s =>
+      `<button class="filter-btn ${tableFilter === s ? 'active' : ''}" onclick="Table.filter('${s}')">${s === 'all' ? 'All' : s.replace('_',' ')}</button>`
+    ).join('');
+  },
+
+  filter(status) {
+    tableFilter = status;
+    this.renderFilters();
+    this.update();
+  },
+
+  sort(key) {
+    if (tableSortKey === key) tableSortDir *= -1;
+    else { tableSortKey = key; tableSortDir = -1; }
+    this.update();
+  },
+
+  update() {
+    let rows = [...tableData];
+    if (tableFilter !== 'all') {
+      rows = rows.filter(r => (r['Status'] || '').toLowerCase().trim() === tableFilter);
+    }
+
+    const keyMap = {
+      score: 'Relevance Score', podcast: 'Podcast Name', guest: 'Source Guest',
+      status: 'Status', email: 'Email', contacted: 'Contacted Date', response: 'Response Type'
+    };
+    const col = keyMap[tableSortKey] || 'Relevance Score';
+    rows.sort((a, b) => {
+      const va = (a[col] || '').toString();
+      const vb = (b[col] || '').toString();
+      const na = parseFloat(va), nb = parseFloat(vb);
+      if (!isNaN(na) && !isNaN(nb)) return (na - nb) * tableSortDir;
+      return va.localeCompare(vb) * tableSortDir;
+    });
+
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = rows.slice(0, 200).map((r, i) => {
+      const status = (r['Status'] || '').toLowerCase().trim();
+      const email = r['Email'] || '';
+      const emailDisplay = email.includes('@') ? email.split('@')[0].slice(0,8) + '@...' : '-';
+      const hasPitch = (r['Pitch Text'] || '').length > 10;
+      return `<tr onclick="Table.expand(${i}, this)" style="cursor:pointer">
+        <td><strong>${r['Relevance Score'] || '-'}</strong></td>
+        <td>${r['Podcast Name'] || '-'}</td>
+        <td style="color:var(--text-dim)">${r['Source Guest'] || '-'}</td>
+        <td><span class="badge badge-${status}">${status || '-'}</span></td>
+        <td style="font-size:12px;color:var(--text-muted)">${emailDisplay}</td>
+        <td style="font-size:12px">${r['Contacted Date'] || '-'}</td>
+        <td>${r['Response Type'] || '-'}</td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:40px">No results</td></tr>';
+  },
+
+  expand(idx, row) {
+    const existing = row.parentElement.querySelector('.expanded-row');
+    if (existing) { existing.remove(); return; }
+
+    const filtered = tableFilter === 'all' ? tableData : tableData.filter(r => (r['Status'] || '').toLowerCase().trim() === tableFilter);
+    const r = filtered[idx];
+    if (!r) return;
+
+    const pitch = r['Pitch Text'] || 'No pitch generated';
+    const subject = r['Email Subject'] || '';
+    const tr = document.createElement('tr');
+    tr.className = 'expanded-row';
+    tr.innerHTML = `<td colspan="7" style="padding:12px">
+      ${subject ? `<div style="font-size:12px;color:var(--text-dim);margin-bottom:6px">Subject: <strong style="color:var(--text)">${subject}</strong></div>` : ''}
+      <div class="pitch-preview">${pitch}</div>
+    </td>`;
+    row.after(tr);
+  }
+};
+
+// ============================================================
+// MODAL + TOAST
+// ============================================================
+const Modal = {
+  show(title, msg, onConfirm) {
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalMsg').textContent = msg;
+    const btn = document.getElementById('modalConfirmBtn');
+    btn.onclick = () => { this.close(); onConfirm(); };
+    document.getElementById('confirmModal').classList.remove('hidden');
+  },
+  close() { document.getElementById('confirmModal').classList.add('hidden'); }
+};
+
+const Toast = {
+  show(msg, type = 'info') {
+    const el = document.createElement('div');
+    el.className = `toast toast-${type}`;
+    el.textContent = msg;
+    document.getElementById('toasts').appendChild(el);
+    setTimeout(() => el.remove(), 5000);
+  }
+};
+
+// ============================================================
+// APP
+// ============================================================
+const App = {
+  refreshTimer: null,
+
+  async init() {
+    renderWorkflowButtons();
+    await this.refresh();
+    this.refreshTimer = setInterval(() => this.refresh(), CONFIG.refreshInterval);
+  },
+
+  async refresh() {
+    document.getElementById('lastUpdated').textContent = 'Refreshing...';
+    try {
+      const data = await DataService.fetchAll();
+      const m = Metrics.compute(data);
+      renderMetrics(m);
+      renderPipeline(m);
+      renderStatusChart(m);
+      renderActivityFeed(data);
+      Table.render(data.podcasts);
+      const now = new Date();
+      document.getElementById('lastUpdated').textContent = `Updated ${now.toLocaleTimeString()}`;
+    } catch (e) {
+      document.getElementById('lastUpdated').textContent = 'Error loading data';
+      Toast.show('Failed to refresh: ' + e.message, 'error');
+    }
+  }
+};
+
+document.addEventListener('DOMContentLoaded', () => App.init());
+</script>
+</body>
+</html>
